@@ -3,9 +3,17 @@ from flask_restx import Api, Resource, fields
 from pprint import pprint  
 from datetime import datetime
 # from workBitrix import get_task_work_time, create_item, get_crm_task, prepare_crm_task
+# from collections import deque
 from workBitrix import get_products, update_product
+from dotenv import load_dotenv
+import os
+# from pprint import pformat
+
+load_dotenv()
+PORT=os.getenv('PORT')
+HOST=os.getenv('HOST')
 app = Flask(__name__)
-api = Api(app, version='1.0', title='pkGroup API',description='A pkGroup API',)
+api = Api(app, version='1.0', title='CAD system API',description='A pkGroup API',)
 
 
 @api.route('/task')
@@ -73,7 +81,33 @@ class product_entity(Resource):
         
         return 'OK'
 
+# Очередь для хранения логов
+# logs_queue = deque(maxlen=10)  # Максимум 10 последних логов
+logs = []
+@app.route('/', methods=['GET', 'POST'])
+def index():
+    if request.method == 'POST':
+        log_entry = request.form.get('log_entry')
+        if log_entry:
+            log_level = request.form.get('log_level', 'INFO')  # По умолчанию INFO
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            if len(logs) >= 30:
+                logs.pop(0)
+            logs.append({'timestamp': timestamp, 'level': log_level, 'message': log_entry})
+            return 'Лог записан!'
+        else:
+            return 'Нет данных для записи в лог!'
+    else:
+        for log in logs:
+            log['message'] = log['message']
+        logs.reverse()
+        return render_template('index.html', logs=logs)
+    
+@app.route('/clear_logs', methods=['POST'])
+def clear_logs():
+    logs.clear()
+    return 'Логи очищены!'
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0',port='5007',debug=True)
+    app.run(host=HOST, port=PORT, debug=True)
     
