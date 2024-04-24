@@ -2,11 +2,18 @@ from openpyxl.utils import get_column_letter
 from openpyxl import Workbook, load_workbook
 from dataclasses import dataclass
 from workBitrix import create_product
+import requests
+from dotenv import load_dotenv
+import os
+load_dotenv()
+PORT=os.getenv('PORT')
+HOST=os.getenv('HOST')
 fileName = 'list_28 (2).xlsx'
 # head = 229
 wbR = load_workbook(filename=fileName, read_only=True)
 
-
+def send_log(message, level='INFO'):
+    requests.post(f'http://{HOST}:{PORT}/logs', json={'log_entry': message, 'log_level': level})
 title=('Страна', 'Менеджер', 'Наименование', 'SKU', 'Material Type', 'Product Group', 'Contract Term', 'Amount', 'Цена SRP', 'ASDK', 'ACV', 'Total', 'Цена KZT', 'Base %', 'VAR price', 'add')
 
 @dataclass
@@ -43,7 +50,7 @@ def get_values(row: int):
     sheet_ranges = wbR['list_28 (2)']
 
     # for col in sheet_ranges.iter_cols(max_col=16, min_row=row, max_row=row, values_only=True):
-    for row in sheet_ranges.iter_rows(max_col=16, min_row=row, max_row=row, values_only=True):
+    for row in sheet_ranges.iter_rows(max_col=16, min_row=1, max_row=20, values_only=True):
         # print(prepare_age(row[1]))
         
         print(row)
@@ -71,10 +78,14 @@ def get_values(row: int):
             "PROPERTY_12": row[Product.add],
         }
         print(fields)
-        create_product(fields)
+        # send_log(f'Создание товара {fields["NAME"]}')
+        send_log(fields, 'DEBUG')
+        # create_product(fields)
         # return row
 
         # for cell in row:
 
 if __name__ == '__main__':
     get_values(1)
+
+    

@@ -110,7 +110,7 @@ def create_product(fields:dict):
 
 if __name__ == '__main__':
 
-
+    
    a=get_products(1)
 
     
